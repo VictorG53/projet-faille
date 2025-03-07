@@ -1,0 +1,12 @@
+volumes: 
+  db-data:
+
+services:
+  app:
+    image: node:23-alpine
+    volumes:
+      - ./src:/app
+  db:
+    image: postgres:13
+    volumes:
+      - db-data:/var/lib/postgresql/data  
