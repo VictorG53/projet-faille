@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informations de l'utilisateur</title>
+</head>
+
+<body>
+    <h1>Informations de l'utilisateur</h1>
+    <p>Identifiant: <span id="userId"></span></p>
+    <p>Nom d'utilisateur: <span id="username"></span></p>
+    <p>Description:
+    <div id="description"></div>
+    </p>
+    <a href="/update-description">Modifier la description</a>
+
+    <script>
+
+        // Script pour récupérer les informations de l'utilisateur depuis l'API
+        const userId = window.location.pathname.split('/').pop();
+        fetch(`/api/user/${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('userId').textContent = data.id;
+                document.getElementById('username').textContent = data.username;
+                document.getElementById('description').innerHTML = data.description;
+            })
+            .catch(error => {
+                console.error('Error fetching user data:', error);
+            });
+    </script>
+</body>
+
+</html>

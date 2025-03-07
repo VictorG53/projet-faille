@@ -8,8 +8,47 @@
 </head>
 
 <body>
-    <h1>Mon super site</h1>
-    <h2>Développé par Fabien et Victor</h2>
+    <h1>Le super site de Fabien et Victor</h1>
+    <div id="user-info">
+    </div>
+
+    <script>
+        // Script pour récupérer les informations de l'utilisateur depuis l'API
+        fetch('/api/me')
+            .then(response => response.json())
+            .then(data => {
+                const userInfo = document.getElementById('user-info');
+                userInfo.innerHTML = `
+                    <p>Bienvenu ${data.username} !</p>
+                    <a href="/user/${data.id}">Voir mon profil</a>
+                    <button id="logout-button">Déconnexion</button>
+                `;
+
+                document.getElementById('logout-button').addEventListener('click', () => {
+                    fetch('/api/logout', { method: 'POST' })
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.href = '/login';
+                            } else {
+                                console.error('Error logging out');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error logging out:', error);
+                        });
+                });
+            })
+            .catch(error => {
+                // Afficher "vous êtes déconnecté"
+                const userInfo = document.getElementById('user-info');
+                userInfo.innerHTML = `
+                    <p>Vous êtes déconnecté</p>
+                    <a href="/login">Se connecter</a>
+                `;
+
+                console.error('Error fetching user data:', error);
+            });
+    </script>
 </body>
 
 </html>
