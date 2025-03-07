@@ -3,10 +3,20 @@ volumes:
 
 services:
   app:
-    image: node:23-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ./src:/app
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
   db:
     image: postgres:13
     volumes:
-      - db-data:/var/lib/postgresql/data  
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: failleuser
+      POSTGRES_PASSWORD: faillepassword
+      POSTGRES_DB: failledb
