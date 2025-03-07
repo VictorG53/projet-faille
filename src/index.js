@@ -67,25 +67,25 @@ app.get('/data', (req, res) => {
 
 app.post('/create-user', (req, res) => {
     const { username, password } = req.body;
-    client.query('INSERT INTO userapp (username, password) VALUES ($1, $2)', [username, password], (err, result) => {
+    client.query(`INSERT INTO userapp (username, password) VALUES ('${username}', '${password}')`, [], (err, result) => {
         if (err) {
             console.error('Error inserting user', err);
             res.status(500).send('Error creating user');
         } else {
-            res.redirect('/');
+            res.redirect('/login');
         }
     });
 });
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
-    client.query('SELECT * FROM userapp WHERE username = $1 AND password = $2', [username, password], (err, result) => {
+    client.query(`SELECT * FROM userapp WHERE username = '${username}' AND password = '${password}'`, [], (err, result) => {
         if (err) {
             console.error('Error querying user', err);
             res.status(500).send('Error logging in');
         } else if (result.rows.length > 0) {
             req.session.userId = result.rows[0].id;
-            res.send('Login successful');
+            res.redirect('/')
         } else {
             res.status(401).send('Invalid credentials');
         }

@@ -7,17 +7,18 @@ networks:
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: node:23-alpine
+    working_dir: /app
     volumes:
       - ./src:/app
+      - /app/node_modules
     ports:
       - 3000:3000
     depends_on:
       - db
     networks:
       - faille-network
+    command: sh -c "npm ci && npm install -g nodemon && nodemon index.js"
   db:
     image: postgres:13
     volumes:
