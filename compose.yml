@@ -1,6 +1,10 @@
 volumes: 
   db-data:
 
+networks:
+  faille-network:
+    driver: bridge
+
 services:
   app:
     build:
@@ -12,6 +16,8 @@ services:
       - 3000:3000
     depends_on:
       - db
+    networks:
+      - faille-network
   db:
     image: postgres:13
     volumes:
@@ -20,3 +26,5 @@ services:
       POSTGRES_USER: failleuser
       POSTGRES_PASSWORD: faillepassword
       POSTGRES_DB: failledb
+    networks:
+      - faille-network
