@@ -40,6 +40,28 @@ client.connect().then(() => {
     console.error('Connection to database failed', err);
 });
 
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+
+    // Hacher le mot de passe
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+
+    // Convertir le hachage en une chaîne hexadécimale
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    return hashHex;
+}
+
+export function isAuthenticated(req, res, next) {
+    if (req.session.userId) {
+        return next();
+    } else {
+        res.status(401).send('Unauthorized');
+    }
+}
+
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/pages/index.html');
 });
@@ -57,9 +79,14 @@ app.get('/user/:id', (req, res) => {
 });
 
 
-app.get('/api/user/:id', (req, res) => {
+app.get('/api/user/:id', isAuthenticated,(req, res) => {
     const userId = req.params.id;
-    client.query(`SELECT * FROM userapp WHERE id = '${userId}'`, (err, result) => {
+
+    if (req.session.userId !== parseInt(userId, 10)) {
+        return res.status(403).send('Forbidden');
+    }
+    
+    client.query('SELECT * FROM userapp WHERE id = $1', [userId], (err, result) => {
         if (err) {
             console.error('Error querying user', err);
             res.status(500).send('Error retrieving user data');
@@ -71,9 +98,10 @@ app.get('/api/user/:id', (req, res) => {
     });
 });
 
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
-    client.query(`INSERT INTO userapp (username, password) VALUES ('${username}', '${password}')`, (err, result) => {
+    const hashedPassword = await hashPassword(password);
+    client.query('INSERT INTO userapp (username, password) VALUES ($1, $2)', [username, hashedPassword], (err, result) => {
         if (err) {
             console.error('Error inserting user', err);
             res.status(500).send('Error creating user');
@@ -85,7 +113,7 @@ app.post('/api/register', (req, res) => {
 
 app.get('/api/me', (req, res) => {
     if (req.session.userId) {
-        client.query(`SELECT * FROM userapp WHERE id = '${req.session.userId}'`, (err, result) => {
+        client.query('SELECT * FROM userapp WHERE id = $1', [req.session.userId], (err, result) => {
             if (err) {
                 console.error('Error querying user', err);
                 res.status(500).send('Error retrieving user data');
@@ -122,14 +150,15 @@ app.post('/api/update-description', (req, res) => {
     });
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
-    client.query(`SELECT * FROM userapp WHERE username = '${username}' AND password = '${password}'`, (err, result) => {
+    client.query('SELECT * FROM userapp WHERE username = $1 AND password = $2', [username, await hashPassword(password)], (err, result) => {
         if (err) {
             console.error('Error querying user', err);
             res.status(500).send('Error logging in');
         } else if (result.rows.length > 0) {
             req.session.userId = result.rows[0].id;
+            console.log(req.session.userId);
             req.session.username = result.rows[0].username;
             res.redirect('/');
         } else {
